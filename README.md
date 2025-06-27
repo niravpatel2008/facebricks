@@ -2,6 +2,10 @@
 
 > A fun and interactive Brick Breaker game controlled by your nose using MediaPipe's FaceMesh and JavaScript. Break bricks with just face movement—no hands needed!
 
+## 🔗 Live Demo
+
+[Play FaceBricks Now](https://niravpatel2008.github.io/facebricks/)
+
 ## 🎮 Features
 
 - 🧠 Face-controlled paddle using nose position
