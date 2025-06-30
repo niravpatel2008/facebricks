@@ -189,7 +189,7 @@ function drawPaddle() {
   ctx.beginPath();
   ctx.rect(
     paddleX,
-    canvas.height - paddleHeight - 100,
+    canvas.height - paddleHeight - 50,
     paddleWidth,
     paddleHeight
   );
@@ -261,7 +261,7 @@ function draw() {
   }
   if (y + dy < ballRadius) {
     dy = -dy;
-  } else if (y + dy > canvas.height - paddleHeight - 10 - ballRadius) {
+  } else if (y + dy > canvas.height - paddleHeight - 50 - ballRadius) {
     if (x > paddleX && x < paddleX + paddleWidth) {
       dy = -dy;
       giveHaptic(200); // Haptic feedback for paddle collision
