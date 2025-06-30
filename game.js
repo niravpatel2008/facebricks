@@ -65,6 +65,14 @@ const iconColors = [
   "#fdcb6e",
 ];
 
+function giveHaptic(val = 200) {
+  if ("vibrate" in navigator) {
+    navigator.vibrate(val); // short tap
+  } else {
+    console.log("Vibration API not supported");
+  }
+}
+
 function calculateBricks() {
   // Brick size and padding
   const brickWidth = 75;
@@ -181,7 +189,7 @@ function drawPaddle() {
   ctx.beginPath();
   ctx.rect(
     paddleX,
-    canvas.height - paddleHeight - 10,
+    canvas.height - paddleHeight - 100,
     paddleWidth,
     paddleHeight
   );
@@ -214,6 +222,7 @@ function startGame() {
     canvas.height = window.innerHeight;
     setupBricks();
     resetBallAndPaddle();
+    giveHaptic(400); // Long haptic feedback for game start
     gameStarted = true;
     draw();
   }
@@ -232,6 +241,7 @@ function collisionDetection() {
         ) {
           dy = -dy;
           b.status = 0;
+          giveHaptic(100); // Haptic feedback for brick collision
         }
       }
     }
@@ -254,8 +264,10 @@ function draw() {
   } else if (y + dy > canvas.height - paddleHeight - 10 - ballRadius) {
     if (x > paddleX && x < paddleX + paddleWidth) {
       dy = -dy;
+      giveHaptic(200); // Haptic feedback for paddle collision
     } else if (y + dy > canvas.height - ballRadius) {
       gameStarted = false; // Game over
+      giveHaptic(500); // Haptic feedback for game over
       // document.location.reload();
     }
   }
