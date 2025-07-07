@@ -83,7 +83,42 @@ h1 {
 .popup-content h2 {
   width: 100%;
   text-align: center;
+  color: #ffb347; /* Match theme accent */
+  margin-bottom: 20px; /* Add some spacing */
 }
+
+.popup-content p {
+  color: #dfe6e9; /* Light grey for readability */
+  font-size: 1.1rem;
+  margin-bottom: 25px; /* Spacing before button */
+}
+
+.popup-content button { /* Style for the button inside the popup */
+  font-size: 1.1rem;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #00e6e6, #ffb347);
+  color: #232526;
+  font-weight: 600;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  text-transform: uppercase; /* Make button text stand out */
+}
+
+.popup-content button:hover,
+.popup-content button:focus {
+  background: linear-gradient(90deg, #00c4c4, #ffa337); /* Slightly brighter on hover */
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.25);
+}
+
+.popup-content button:active {
+  background: #232526;
+  color: #fff;
+  border: 2px solid #00e6e6;
+}
+
 
 .popup-content iframe {
   display: block;

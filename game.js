@@ -4,6 +4,9 @@ const ctx = canvas.getContext("2d");
 // Game variables
 let paddleX = canvas.width / 2 - 50;
 let paddleWidth = 250;
+let currentLevel = 1;
+let lives = 3;
+const maxLevel = 5; // Let's define a maximum number of levels
 const paddleHeight = 16;
 let rightPressed = false;
 let leftPressed = false;
@@ -80,18 +83,32 @@ function calculateBricks() {
   const brickPadding = 10;
   const brickOffsetTop = 40;
   const brickOffsetLeft = 35;
-  // Calculate columns and rows based on canvas size
+  // Calculate columns based on canvas size
   let brickColumnCount = Math.floor(
     (canvas.width - brickOffsetLeft * 2 + brickPadding) /
       (brickWidth + brickPadding)
   );
-  let brickRowCount = Math.floor(
-    (canvas.height * 0.3 - brickOffsetTop + brickPadding) /
+  // Clamp to at least 1, and at most 20 cols
+  brickColumnCount = Math.max(1, Math.min(brickColumnCount, 20));
+
+  // Determine brick rows based on current level
+  // Start with a base number of rows and add more for higher levels
+  let baseBrickRowCount = 3; // Minimum rows for level 1
+  let maxBrickRowCount = 8;  // Maximum rows for higher levels
+  // Increase rows by 1 for each level, up to maxBrickRowCount
+  let brickRowCount = Math.min(baseBrickRowCount + currentLevel -1 , maxBrickRowCount);
+  // Ensure at least 1 row even if logic is flawed
+  brickRowCount = Math.max(1, brickRowCount);
+
+
+  // Fallback if canvas height is very small, to prevent too many rows
+  let maxRowsByHeight = Math.floor(
+    (canvas.height * 0.4 - brickOffsetTop + brickPadding) / // Use up to 40% of height for bricks
       (brickHeight + brickPadding)
   );
-  // Clamp to at least 1, and at most 20 cols, 10 rows
-  brickColumnCount = Math.max(1, Math.min(brickColumnCount, 20));
-  brickRowCount = Math.max(1, Math.min(brickRowCount, 10));
+  brickRowCount = Math.min(brickRowCount, maxRowsByHeight);
+  brickRowCount = Math.max(1, Math.min(brickRowCount, 10)); // Overall clamp
+
   return {
     brickColumnCount,
     brickRowCount,
@@ -198,6 +215,16 @@ function drawPaddle() {
   ctx.closePath();
 }
 
+function drawGameInfo() {
+  ctx.font = "20px Arial";
+  ctx.fillStyle = "#FFF";
+  ctx.textAlign = "left";
+  ctx.fillText("Level: " + currentLevel, 10, 25);
+  ctx.textAlign = "right";
+  ctx.fillText("Lives: " + lives, canvas.width - 10, 25);
+  ctx.textAlign = "center"; // Reset for other functions if they rely on it
+}
+
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -242,9 +269,102 @@ function collisionDetection() {
           dy = -dy;
           b.status = 0;
           giveHaptic(100); // Haptic feedback for brick collision
+
+          // Check if all bricks are cleared
+          let bricksCleared = true;
+          for (let c2 = 0; c2 < brickColumnCount; c2++) {
+            for (let r2 = 0; r2 < brickRowCount; r2++) {
+              if (bricks[c2][r2].status === 1) {
+                bricksCleared = false;
+                break;
+              }
+            }
+            if (!bricksCleared) break;
+          }
+
+          if (bricksCleared) {
+            currentLevel++;
+            if (currentLevel > maxLevel) {
+              // Win condition will be handled by a popup later
+              // For now, just log it and stop the game.
+              console.log("You Win!");
+              showGameMessage("You Win!", `Congratulations! You completed all ${maxLevel} levels.`, "Play Again?", resetGame);
+              gameStarted = false;
+            } else {
+              setupBricks();
+              resetBallAndPaddle();
+              // Increase ball speed slightly for the new level
+              dx = dx > 0 ? dx + 0.5 : dx - 0.5;
+              dy = dy > 0 ? dy + 0.5 : dy - 0.5;
+              giveHaptic(300); // Haptic feedback for leveling up
+            }
+          }
         }
       }
     }
+  }
+}
+
+function resetGame() {
+    currentLevel = 1;
+    lives = 3;
+    setupBricks();
+    resetBallAndPaddle();
+    // Reset ball speed
+    dx = 6 * (Math.random() < 0.5 ? 1 : -1);
+    dy = -6;
+    gameStarted = true;
+    hideGameMessage(); // Hide any popups
+    draw(); // Restart the game loop
+}
+
+function showGameMessage(title, message, buttonText, callback) {
+  let popup = document.getElementById("gamePopup");
+  if (!popup) {
+    popup = document.createElement("div");
+    popup.id = "gamePopup";
+    popup.className = "popup"; // Use existing CSS class
+    popup.style.display = "none"; // Initially hidden
+
+    const content = document.createElement("div");
+    content.className = "popup-content"; // Use existing CSS class
+
+    const h2 = document.createElement("h2");
+    h2.id = "popupTitle";
+    content.appendChild(h2);
+
+    const p = document.createElement("p");
+    p.id = "popupMessage";
+    content.appendChild(p);
+
+    const button = document.createElement("button");
+    button.id = "popupButton";
+    button.onclick = () => { // Arrow function to ensure correct `this` or scope for callback
+        if(callback) callback();
+    };
+    content.appendChild(button);
+
+    popup.appendChild(content);
+    document.body.appendChild(popup);
+  }
+
+  document.getElementById("popupTitle").textContent = title;
+  document.getElementById("popupMessage").textContent = message;
+  const popupButton = document.getElementById("popupButton");
+  popupButton.textContent = buttonText;
+  // Re-assign onclick to the new callback, as it might change (e.g. win vs loss)
+  popupButton.onclick = () => {
+      if(callback) callback();
+  };
+
+
+  popup.style.display = "flex"; // Show the popup
+}
+
+function hideGameMessage() {
+  const popup = document.getElementById("gamePopup");
+  if (popup) {
+    popup.style.display = "none";
   }
 }
 
@@ -254,6 +374,7 @@ function draw() {
   drawBricks();
   drawBall();
   drawPaddle();
+  drawGameInfo(); // Draw lives and level
   collisionDetection();
 
   if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
@@ -265,10 +386,18 @@ function draw() {
     if (x > paddleX && x < paddleX + paddleWidth) {
       dy = -dy;
       giveHaptic(200); // Haptic feedback for paddle collision
-    } else if (y + dy > canvas.height - ballRadius) {
-      gameStarted = false; // Game over
-      giveHaptic(500); // Haptic feedback for game over
-      // document.location.reload();
+    } else if (y + dy > canvas.height - ballRadius) { // Ball hit the bottom
+      lives--;
+      giveHaptic(500); // Haptic feedback for losing a life / game over
+      if (lives > 0) {
+        resetBallAndPaddle();
+        // Keep gameStarted = true;
+      } else {
+        // Game Over
+        console.log("Game Over!");
+        showGameMessage("Game Over!", `You reached level ${currentLevel}.`, "Try Again?", resetGame);
+        gameStarted = false;
+      }
     }
   }
 
